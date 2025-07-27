@@ -1,8 +1,32 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
+  "sourceRoot": "apps/tour-api/src",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/tour-api/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/tour-api",
+  "projects": {
+    "tour-api": {
+      "type": "application",
+      "root": "apps/tour-api",
+      "entryFile": "main",
+      "sourceRoot": "apps/tour-api/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/tour-api/tsconfig.app.json"
+      }
+    },
+    "tour-batch": {
+      "type": "application",
+      "root": "apps/tour-batch",
+      "entryFile": "main",
+      "sourceRoot": "apps/tour-batch/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/tour-batch/tsconfig.app.json"
+      }
+    }
   }
 }
