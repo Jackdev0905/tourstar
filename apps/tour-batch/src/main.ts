@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
-import { TourBatchModule } from './tour-batch.module';
+import { PropertyBatchModule } from './property-batch.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(TourBatchModule);
+  const app = await NestFactory.create(PropertyBatchModule);
   await app.listen(process.env.PORT_BATCH ?? 3001);
 }
 bootstrap();

@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { TourBatchModule } from './../src/tour-batch.module';
+import { PropertyBatchModule } from './../src/property-batch.module';
 
-describe('TourBatchController (e2e)', () => {
+describe('PropertyBatchController (e2e)', () => {
   let app: INestApplication;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [TourBatchModule],
+      imports: [PropertyBatchModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();

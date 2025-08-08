@@ -21,7 +21,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./apps/tour-api/test/jest-e2e.json"
   },
-   "dependencies": {
+  "dependencies": {
     "@apollo/server": "^4.9.5",
     "@nestjs/apollo": "^12.0.10",
     "@nestjs/axios": "^3.0.1",
@@ -36,6 +36,7 @@
     "@nestjs/platform-ws": "^10.2.10",
     "@nestjs/schedule": "^4.0.0",
     "@nestjs/websockets": "^10.2.10",
+    "axios": "^1.11.0",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
