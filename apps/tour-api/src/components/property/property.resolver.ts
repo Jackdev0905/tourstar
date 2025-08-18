@@ -18,6 +18,8 @@ import { WithoutGuard } from '../auth/guards/without.guard';
 import { shapeIntoMongooseObjectId } from '../../libs/config';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { Listing } from '../../libs/dto/listing/listing';
+import { ListingUpdate } from '../../libs/dto/listing/listing.update';
 
 @Resolver()
 export class PropertyResolver {
@@ -69,6 +71,17 @@ export class PropertyResolver {
 		return await this.propertyService.likeTargetProperty(memberId, likeRefId);
 	}
 
+	@UseGuards(AuthGuard)
+	@Mutation(() => Property)
+	public async listingProperty(
+		@AuthMember('_id') memberId: ObjectId,
+		@Args('propertyId') input: String,
+	): Promise<Property> {
+		console.log('Mutation: listingProperty');
+		const propertyId = shapeIntoMongooseObjectId(input);
+		return await this.propertyService.listingProperty(memberId, propertyId);
+	}
+
 	@UseGuards(WithoutGuard)
 	@Query(() => Properties)
 	public async getProperties(
@@ -87,6 +100,26 @@ export class PropertyResolver {
 	): Promise<Properties | null> {
 		console.log('Query: getFavorites');
 		return await this.propertyService.getFavorites(memberId, input);
+	}
+
+	@UseGuards(AuthGuard)
+	@Query(() => Properties)
+	public async getMyListings(
+		@Args('input') input: OrdinaryInquiry,
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<Properties | null> {
+		console.log('Query: getMyListings');
+		return await this.propertyService.getMyListings(memberId, input);
+	}
+
+	
+	@UseGuards(AuthGuard)
+	@Mutation(() => Property)
+	public async updateMyListing(@Args('input') input: ListingUpdate): Promise<Property> {
+		console.log('Mutation: updateMyListing');
+		input.propertyId = shapeIntoMongooseObjectId(input.propertyId);
+		input.memberId = shapeIntoMongooseObjectId(input.memberId);
+		return await this.propertyService.updateMyListing(input);
 	}
 
 	@UseGuards(AuthGuard)

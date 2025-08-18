@@ -61,6 +61,35 @@ export const lookupAuthMemberLiked = (memberId: T, targetRefId: string = '$_id')
 	};
 };
 
+export const lookupMyListing = (memberId: T, targetRefId: string = '$_id') => {
+	return {
+		$lookup: {
+			from: 'listings',
+			let: { localLikeRefId: targetRefId, localMemberId: memberId, localMyListing: true },
+			pipeline: [
+				{
+					$match: {
+						$expr: {
+							$and: [{ $eq: ['$propertyId', '$$localLikeRefId'] }, { $eq: ['$memberId', '$$localMemberId'] }],
+						},
+					},
+				},
+
+				{
+					$project: {
+						_id: 0,
+						memberId: 1,
+						propertyId: 1,
+						myListing: '$$localMyListing',
+					},
+				},
+			],
+
+			as: 'meListing',
+		},
+	};
+};
+
 export const lookupAuthMemberFollowed = (followerId: T, followingId: string) => {
 	return {
 		$lookup: {
@@ -126,11 +155,29 @@ export const lookupFavorite = {
 	},
 };
 
+export const lookupListing = {
+	$lookup: {
+		from: 'members',
+		localField: 'listingProperty.memberId',
+		foreignField: '_id',
+		as: 'listingProperty.memberData',
+	},
+};
+
 export const lookupVisited= {
 	$lookup: {
 		from: 'members',
 		localField: 'visitedProperty.memberId',
 		foreignField: '_id',
 		as: 'visitedProperty.memberData',
+	},
+};
+
+export const lookupNotification = {
+	$lookup: {
+		from: 'members',
+		localField: 'authorId',
+		foreignField: '_id',
+		as: 'memberData',
 	},
 };

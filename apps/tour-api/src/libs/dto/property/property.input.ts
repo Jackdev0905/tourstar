@@ -1,9 +1,18 @@
 import { availablePropertySorts } from './../../config';
 import { Field, InputType, Int } from '@nestjs/graphql';
 import { IsNotEmpty, Length, IsOptional, Min, IsInt, IsIn } from 'class-validator';
-import { PropertyActivities, PropertyTargetAudience, PropertyIncludedOption, PropertyLanguage, PropertyLocation, PropertyStatus, PropertyType } from '../../enums/property.enum';
+import {
+	PropertyActivities,
+	PropertyTargetAudience,
+	PropertyIncludedOption,
+	PropertyLanguage,
+	PropertyLocation,
+	PropertyStatus,
+	PropertyType,
+} from '../../enums/property.enum';
 import { ObjectId } from 'mongoose';
 import { Direction } from '../../enums/common.enum';
+import { MyBooked } from '../../enums/listing.enum';
 
 @InputType()
 export class PropertyInput {
@@ -64,13 +73,11 @@ export class PropertyInput {
 	@Field(() => String, { nullable: true })
 	propertyDesc?: string;
 
-	
 	@IsOptional()
 	@Field(() => [PropertyTargetAudience], { nullable: true })
 	propertyTargetAudience?: PropertyTargetAudience[];
 
 	memberId?: ObjectId;
-
 }
 
 @InputType()
@@ -81,8 +88,6 @@ export class PricesRange {
 	@Field(() => Int)
 	end: number;
 }
-
-
 
 @InputType()
 class PISearch {
@@ -116,17 +121,20 @@ class PISearch {
 
 	@IsOptional()
 	@Field(() => PricesRange, { nullable: true })
-	pricesRange?: PricesRange;	
+	pricesRange?: PricesRange;
 
 	@IsOptional()
 	@Field(() => Number, { nullable: true })
-	memberCount?: number;	
+	memberCount?: number;
+
+	@IsOptional()
+	@Field(() => Date, { nullable: true })
+	propertyDate?: Date;
 
 	@IsOptional()
 	@Field(() => String, { nullable: true })
 	text?: string;
 }
-
 
 @InputType()
 export class PropertiesInquiry {
@@ -153,7 +161,6 @@ export class PropertiesInquiry {
 	@Field(() => PISearch)
 	search: PISearch;
 }
-
 
 @InputType()
 export class APISearch {
@@ -188,8 +195,6 @@ export class AgentPropertiesInquiry {
 	search: APISearch;
 }
 
-
-
 @InputType()
 export class ALPISearch {
 	@IsOptional()
@@ -198,7 +203,7 @@ export class ALPISearch {
 
 	@IsOptional()
 	@Field(() => [PropertyLocation], { nullable: true })
-	propertyLocation?: PropertyLocation[];
+	propertyLocationList?: PropertyLocation[];
 }
 
 @InputType()
@@ -227,7 +232,6 @@ export class AllPropertiesInquiry {
 	search: ALPISearch;
 }
 
-
 @InputType()
 export class OrdinaryInquiry {
 	@IsNotEmpty()
@@ -239,4 +243,8 @@ export class OrdinaryInquiry {
 	@Min(1)
 	@Field(() => Int)
 	limit: number;
+
+	@IsOptional()
+	@Field(() => MyBooked)
+	myBooked: MyBooked;
 }

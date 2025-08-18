@@ -19,9 +19,14 @@ import { ViewInput } from '../../libs/dto/view/view.input';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
 import * as moment from 'moment';
-import { lookupAuthMemberLiked, lookupMember, shapeIntoMongooseObjectId } from '../../libs/config';
+import { lookupAuthMemberLiked, lookupMember, lookupMyListing, shapeIntoMongooseObjectId } from '../../libs/config';
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
+import { MyBooked } from '../../libs/enums/listing.enum';
+import { ListingInput } from '../../libs/dto/listing/listing.input';
+import { ListingService } from '../listing/listing.service';
+import { Listing } from '../../libs/dto/listing/listing';
+import { ListingUpdate } from '../../libs/dto/listing/listing.update';
 
 @Injectable()
 export class PropertyService {
@@ -30,12 +35,16 @@ export class PropertyService {
 		private memberService: MemberService,
 		private viewService: ViewService,
 		private likeService: LikeService,
+		private listingService: ListingService,
 	) {}
 
 	public async createProperty(input: PropertyInput): Promise<Property> {
 		try {
 			const result = await this.propertyModel.create(input);
-			await this.memberService.memberStatsEditor({ _id: result._id, targetKey: 'memberProperties', modifier: 1 });
+			if (!input.memberId) {
+				throw new BadRequestException('Member ID is required');
+			}
+			await this.memberService.memberStatsEditor({ _id: input?.memberId, targetKey: 'memberProperties', modifier: 1 });
 			if (!result) throw new BadRequestException(Message.CREATE_FAILED);
 			return result;
 		} catch (err) {
@@ -75,6 +84,12 @@ export class PropertyService {
 				likeRefId: propertyId,
 			};
 			targetProperty.meLiked = await this.likeService.checkLikeExistance(likeInput);
+			//@ts-ignore
+			const listingInput: ListingInput = {
+				memberId: memberId,
+				propertyId: propertyId,
+			};
+			targetProperty.meListing = await this.listingService.checkListingExistance(listingInput);
 		}
 		targetProperty.memberData = await this.memberService.getMember(null, targetProperty.memberId);
 
@@ -135,6 +150,29 @@ export class PropertyService {
 		return result;
 	}
 
+	public async listingProperty(memberId: ObjectId, propertyId: ObjectId): Promise<Property> {
+		const target: Property | null = await this.propertyModel
+			.findOne({ _id: propertyId, propertyStatus: PropertyStatus.ACTIVE })
+			.exec();
+		if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		const input: ListingInput = {
+			memberId: memberId,
+			propertyId: propertyId,
+			myBooked: MyBooked.PAUSED,
+		};
+
+		await this.listingService.listingToggle(input);
+
+		const updatedProperty = await this.propertyModel.findById(propertyId).exec();
+
+		if (!updatedProperty) {
+			throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
+		}
+
+		return updatedProperty;
+	}
+
 	public async getProperties(memberId: ObjectId, input: PropertiesInquiry): Promise<Properties> {
 		const match: T = { propertyStatus: PropertyStatus.ACTIVE };
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
@@ -151,6 +189,7 @@ export class PropertyService {
 							{ $limit: input.limit },
 							// meLiked
 							lookupAuthMemberLiked(memberId),
+							lookupMyListing(memberId),
 							lookupMember,
 							{ $unwind: '$memberData' },
 						],
@@ -175,9 +214,19 @@ export class PropertyService {
 			includedOptions,
 			memberCount,
 			text,
+			propertyDate,
 		} = input.search;
 
 		if (memberId) match.memberId = shapeIntoMongooseObjectId(memberId);
+		if (propertyDate) {
+			const start = new Date(propertyDate);
+			start.setHours(0, 0, 0, 0);
+			const end = new Date(propertyDate);
+			end.setHours(23, 59, 59, 999);
+
+			match.propertyDate = { $gte: start, $lte: end };
+		}
+
 		if (locationList) match.propertyLocation = { $in: locationList };
 		if (activityList) match.propertyActivities = { $in: activityList };
 		if (includedOptions) match.propertyIncluded = { $in: includedOptions };
@@ -192,11 +241,6 @@ export class PropertyService {
 		}
 
 		if (text) match.propertyTitle = { $regex: new RegExp(text, 'i') };
-		// if (options) {
-		// 	match['$or'] = options.map((ele) => {
-		// 		return { [ele]: true };
-		// 	});
-		// }
 	}
 
 	public async getFavorites(memberId: ObjectId, input: OrdinaryInquiry): Promise<Properties | null> {
@@ -205,6 +249,21 @@ export class PropertyService {
 
 	public async getVisited(memberId: ObjectId, input: OrdinaryInquiry): Promise<Properties | null> {
 		return await this.viewService.getVisitedProperties(memberId, input);
+	}
+
+	public async getMyListings(memberId: ObjectId, input: OrdinaryInquiry): Promise<Properties | null> {
+		return await this.listingService.getListingProperties(memberId, input);
+	}
+
+	public async updateMyListing(input: ListingUpdate): Promise<Property> {
+		await this.listingService.updateListingProperty(input);
+		const result = await this.propertStatsModifier({
+			_id: input.propertyId,
+			targetKey: 'propertyBookedCount',
+			modifier: input.memberBookedCount,
+		});
+		if (!result) throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
+		return result;
 	}
 
 	public async getAgentProperties(memberId: ObjectId, input: AgentPropertiesInquiry): Promise<Properties> {
@@ -235,12 +294,12 @@ export class PropertyService {
 	}
 
 	public async getAllPropertiesByAdmin(input: AllPropertiesInquiry): Promise<Properties> {
-		const { propertyStatus, propertyLocation } = input.search;
+		const { propertyStatus, propertyLocationList } = input.search;
 
 		const match: T = {};
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
 		if (propertyStatus) match.propertyStatus = propertyStatus;
-		if (propertyLocation) match.propertyLocation = { $in: propertyLocation };
+		if (propertyLocationList) match.propertyLocation = { $in: propertyLocationList };
 
 		const result = await this.propertyModel
 			.aggregate([

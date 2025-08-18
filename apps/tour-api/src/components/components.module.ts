@@ -7,8 +7,11 @@ import { ViewModule } from './view/view.module';
 import { AuthModule } from './auth/auth.module';
 import { FollowModule } from './follow/follow.module';
 import { ArticleModule } from './article/article.module';
+import { ListingModule } from './listing/listing.module';
+import { NotificationModule } from './notification/notification.module';
+import { NoticeModule } from './notice/notice.module';
 
 @Module({
-  imports: [MemberModule, PropertyModule, CommentModule, LikeModule, ViewModule, AuthModule, FollowModule, ArticleModule]
+  imports: [MemberModule, PropertyModule, CommentModule, LikeModule, ViewModule, AuthModule, FollowModule, ArticleModule, ListingModule, NotificationModule, NoticeModule]
 })
 export class ComponentsModule {}
