@@ -15,7 +15,7 @@ services:
       - monorepo-network
 
     # FOR PRODUCTION
-    command: bash -c "npm install && npm run build && npm run start:prod"
+    command: bash -c "rm -rf dist && npm install && npm run build && npm run start:prod"
 
   tour-batch:
     container_name: tour-batch
@@ -31,7 +31,7 @@ services:
       - monorepo-network
 
     # FOR PRODUCTION
-    command: bash -c "npm install && npm run start:prod:batch"
+    command: bash -c "npm install && npm run build && npm run start:prod:batch"
 
 networks:
   monorepo-network:
