@@ -245,6 +245,6 @@ export class OrdinaryInquiry {
 	limit: number;
 
 	@IsOptional()
-	@Field(() => MyBooked)
-	myBooked: MyBooked;
+	@Field(() => MyBooked, {nullable:true})
+	myBooked?: MyBooked;
 }

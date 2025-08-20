@@ -10,6 +10,7 @@ import { lookupFavorite, lookupListing } from '../../libs/config';
 import { Listing, MeListing } from '../../libs/dto/listing/listing';
 import { ListingInput } from '../../libs/dto/listing/listing.input';
 import { ListingUpdate } from '../../libs/dto/listing/listing.update';
+import { MyBooked } from '../../libs/enums/listing.enum';
 
 @Injectable()
 export class ListingService {
@@ -46,7 +47,9 @@ export class ListingService {
 	public async updateListingProperty(input: ListingUpdate): Promise<Listing> {
 		const { propertyId, memberId, myBooked } = input;
 
-		const result = await this.listingModel.findOneAndUpdate({memberId, propertyId}, { myBooked }, { new: true }).exec();
+		const result = await this.listingModel
+			.findOneAndUpdate({ memberId, propertyId, myBooked: MyBooked.PAUSED }, { myBooked }, { new: true })
+			.exec();
 
 		if (!result) {
 			throw new BadRequestException(Message.SOMETHING_WENT_WRONG);

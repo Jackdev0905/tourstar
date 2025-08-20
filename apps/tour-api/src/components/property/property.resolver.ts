@@ -115,11 +115,11 @@ export class PropertyResolver {
 	
 	@UseGuards(AuthGuard)
 	@Mutation(() => Property)
-	public async updateMyListing(@Args('input') input: ListingUpdate): Promise<Property> {
+	public async updateMyListing(@Args('input') input: ListingUpdate,@AuthMember('_id') memberId: ObjectId,): Promise<Property> {
 		console.log('Mutation: updateMyListing');
 		input.propertyId = shapeIntoMongooseObjectId(input.propertyId);
 		input.memberId = shapeIntoMongooseObjectId(input.memberId);
-		return await this.propertyService.updateMyListing(input);
+		return await this.propertyService.updateMyListing(memberId, input);
 	}
 
 	@UseGuards(AuthGuard)

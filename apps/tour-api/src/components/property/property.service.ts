@@ -255,13 +255,27 @@ export class PropertyService {
 		return await this.listingService.getListingProperties(memberId, input);
 	}
 
-	public async updateMyListing(input: ListingUpdate): Promise<Property> {
+	public async updateMyListing(memberId: ObjectId, input: ListingUpdate): Promise<Property> {
+		const targetProperty = await this.propertyModel.findOne({ _id: input.propertyId }).exec();
+		if (
+			targetProperty &&
+			input.memberBookedCount > targetProperty.propertyMaxParticipants - targetProperty.propertyBookedCount
+		) {
+			throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
+		}
 		await this.listingService.updateListingProperty(input);
 		const result = await this.propertStatsModifier({
 			_id: input.propertyId,
 			targetKey: 'propertyBookedCount',
 			modifier: input.memberBookedCount,
 		});
+		if (targetProperty && targetProperty.propertyMaxParticipants === targetProperty.propertyBookedCount) {
+			await this.updateProperty(memberId, {
+				soldAt: new Date(),
+				_id: targetProperty._id,
+				propertyStatus: PropertyStatus.SOLD,
+			});
+		}
 		if (!result) throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
 		return result;
 	}

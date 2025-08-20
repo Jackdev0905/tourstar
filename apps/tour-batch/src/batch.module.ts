@@ -13,7 +13,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 	imports: [
 		ConfigModule.forRoot(),
 		DatabaseModule,
-    ScheduleModule.forRoot(),
+		ScheduleModule.forRoot(),
 		MongooseModule.forFeature([{ name: 'Member', schema: MemberSchema }]),
 		MongooseModule.forFeature([{ name: 'Property', schema: PropertySchema }]),
 	],
